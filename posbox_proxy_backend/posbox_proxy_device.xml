@@ -4,7 +4,6 @@
     <template id="assets_backend" name="proxy_device" inherit_id="web.assets_backend">
       <xpath expr="." position="inside">
           <script type="text/javascript" src="/posbox_proxy_backend/static/src/js/device.js" />
-          <script type="text/javascript" src="/posbox_proxy_backend/static/src/js/main.js" />
       </xpath>
     </template>
 
@@ -31,7 +30,7 @@
     name="Proxy backend"
     id="menu_proxy_backend"
     action="action_config_proxy_backend"
-    parent="base.menu_config"/>
+    parent="base.menu_custom"/>
 
 </data>
 </openerp>

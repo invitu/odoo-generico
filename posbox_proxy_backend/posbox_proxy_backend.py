@@ -20,16 +20,16 @@
 ##############################################################################
 
 from datetime import datetime
-from openerp.osv import fields, osv
+from openerp import models, api, fields, exceptions
 
-class posbox_proxy_backend(osv.osv):
+
+class PosboxProxyBackend(models.Model):
     _name = 'posbox.proxy.backend'
 
-    _columns = {
-        'name': fields.char('Name', select=1, required=True),
-        'value_ip': fields.char('Value IP', help='The hostname or ip address of the hardware proxy', size=45),
-    }
+    name = fields.Char(string='Name', select=1, required=True)
+    value_ip = fields.Char(string='Value IP', help='The hostname or ip address of the hardware proxy', size=45)
 
+    @api.model
     def set_value_space(self, value, space=7, align='right'):
         if align == 'left':
             val_str = str(value) + ' ' * space
@@ -39,14 +39,15 @@ class posbox_proxy_backend(osv.osv):
             result = val_str[-space:]
         return result
 
-    def get_date_formats(self, cr, uid, context=None):
-        lang = self.pool.get('res.users').browse(cr, uid, uid).lang
-        res_lang = self.pool.get('res.lang')
+    @api.model
+    def get_date_formats(self):
+        lang = self._context.get('res.users').lang
+        res_lang = self._context.get('res.lang')
         lang_params = {}
         if lang:
-            ids = res_lang.search(cr, uid, [("code", "=", lang)])
+            ids = res_lang.search([("code", "=", lang)])
             if ids:
-                lang_params = res_lang.read(cr, uid, ids[0], ["date_format", "time_format"])
+                lang_params = res_lang.read(ids[0], ["date_format", "time_format"])
         format_date = lang_params.get("date_format", '%m/%d/%Y').encode('utf-8')
         format_time = lang_params.get("time_format", '%H:%M:%S').encode('utf-8')
         return format_date, format_time

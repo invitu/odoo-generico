@@ -1,9 +1,14 @@
-function openerp_proxy_device(instance,module){
-    var _t = instance.web._t,
-        _lt = instance.web._lt;
-    var QWeb = instance.web.qweb;
+odoo.define('posbox_proxy_backend', function (require) {
+"use strict";
 
-    module.ProxyDevice  = instance.web.Class.extend(openerp.PropertiesMixin,{
+odoo_proxy_device: function(){
+    var core = require('web.core');
+
+    var _t = core._t;
+    var QWeb = core.qweb;
+    _lt = core._lt;
+
+    var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin, {
         init: function(parent,options){
             openerp.PropertiesMixin.init.call(this,parent);
             var self = this;
@@ -71,19 +76,19 @@ function openerp_proxy_device(instance,module){
             this.set_connection_status('connecting',{});
 
             return this.message('handshake').then(function(response){
-                    if(response){
-                        self.set_connection_status('connected');
-                        localStorage['hw_proxy_url'] = url;
-                        console.log('Connected');
-                        //self.keepalive();
-                    }else{
-                        self.set_connection_status('disconnected');
-                        console.error('Connection refused by the Proxy');
-                    }
-                },function(){
+                if(response){
+                    self.set_connection_status('connected');
+                    localStorage['hw_proxy_url'] = url;
+                    console.log('Connected');
+                    //self.keepalive();
+                }else{
                     self.set_connection_status('disconnected');
-                    console.error('Could not connect to the Proxy');
-                });
+                    console.error('Connection refused by the Proxy');
+                }
+            },function(){
+                self.set_connection_status('disconnected');
+                console.error('Could not connect to the Proxy');
+            });
         },
         message : function(name,params){
             var callbacks = this.notifications[name] || [];
@@ -100,38 +105,42 @@ function openerp_proxy_device(instance,module){
         /*
          * ask the printer to print a receipt
          */
-        print_receipt: function(receipt){
-            var self = this;
-            if(receipt){
-                this.receipt_queue.push(receipt);
-            }
-            var aborted = false;
-            function send_printing_job(){
-                if (self.receipt_queue.length > 0){
-                    var r = self.receipt_queue.shift();
-                    self.message('print_xml_receipt',{ receipt: r },{ timeout: 5000 })
-                        .then(function(){
-                            send_printing_job();
-                        },function(error){
-                            if (error) {
-//                                self.pos.pos_widget.screen_selector.show_popup('error-traceback',{
-//                                    'message': _t('Printing Error: ') + error.data.message,
-//                                    'comment': error.data.debug,
-//                                });
-                                console.log("Error de impresion")
-                                return;
-                            }
-                            self.receipt_queue.unshift(r)
-                        });
+            print_receipt: function(receipt){
+                var self = this;
+                if(receipt){
+                    this.receipt_queue.push(receipt);
                 }
-            }
-            send_printing_job();
-        },
+                var aborted = false;
+                function send_printing_job(){
+                    if (self.receipt_queue.length > 0){
+                        var r = self.receipt_queue.shift();
+                        self.message('print_xml_receipt',{ receipt: r },{ timeout: 5000 })
+                            .then(function(){
+                                send_printing_job();
+                            },function(error){
+                                if (error) {
+                                    //                                self.pos.pos_widget.screen_selector.show_popup('error-traceback',{
+                                    //                                    'message': _t('Printing Error: ') + error.data.message,
+                                    //                                    'comment': error.data.debug,
+                                    //                                });
+                                    console.log("Error de impresion")
+                                        return;
+                                }
+                                self.receipt_queue.unshift(r)
+                            });
+                    }
+                }
+                send_printing_job();
+            },
 
-        // asks the proxy to log some information, as with the debug.log you can provide several arguments.
-        log: function(){
-            return this.message('log',{'arguments': _.toArray(arguments)});
-        },
+            // asks the proxy to log some information, as with the debug.log you can provide several arguments.
+            log: function(){
+                return this.message('log',{'arguments': _.toArray(arguments)});
+            },
 
     });
 };
+
+
+
+});
